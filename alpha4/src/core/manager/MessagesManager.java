@@ -1,6 +1,6 @@
-package manager;
+package core.manager;
 
-import a.model.Message;
+import core.model.Message;
 
 import java.util.TreeMap;
 

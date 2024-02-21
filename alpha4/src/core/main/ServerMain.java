@@ -1,8 +1,8 @@
-package main;
+package core.main;
 
-import a.Config;
-import a.DiscoveryServer;
-import a.MessageServer;
+import core.Config;
+import core.DiscoveryServer;
+import core.MessageServer;
 import manager.MessagesManager;
 import manager.PeerManager;
 
@@ -12,7 +12,6 @@ public class ServerMain {
         PeerManager peerManager = new PeerManager();
         MessagesManager messagesManager = new MessagesManager(100);
         new DiscoveryServer(Config.PORT, peerId).start();
-        new MessageServer(Config.PORT, mes.sagesManager).start();
+        new MessageServer(Config.PORT, messagesManager).start();
     }
 }
-.

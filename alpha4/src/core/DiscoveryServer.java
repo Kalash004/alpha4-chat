@@ -1,9 +1,9 @@
-package a;
+package core;
 
-import a.model.Request;
-import a.model.Response;
-import a.model.Status;
-import a.util.JsonUtil;
+import core.model.Request;
+import core.model.Response;
+import core.model.Status;
+import core.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

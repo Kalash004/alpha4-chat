@@ -1,10 +1,10 @@
-package a;
+package core;
 
-import a.manager.MessagesManager;
-import a.model.Request;
-import a.model.Response;
-import a.model.Status;
-import a.util.JsonUtil;
+import core.manager.MessagesManager;
+import core.model.Request;
+import core.model.Response;
+import core.model.Status;
+import core.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ public class MessageServer extends Thread implements Config {
             server.setReuseAddress(true);
             while (true) {
                 try (Socket socket = server.accept(); PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
+                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
                     String address = socket.getInetAddress().getHostAddress();
                     String requestMsg = readInput(in);
                     log.info("Received message {} from {}:{}", requestMsg, address, port);
@@ -39,25 +39,25 @@ public class MessageServer extends Thread implements Config {
 
                     Response response;
                     switch (request.command()) {
-                    case HELLO:
-                        String requestPeerId = request.peerId();
-                        if (requestPeerId != null) {
-                            response = new Response(Status.OK, msgMgr.getMessages(), null, null);
-                        } else {
+                        case HELLO:
+                            String requestPeerId = request.peerId();
+                            if (requestPeerId != null) {
+                                response = new Response(Status.OK, msgMgr.getMessages(), null, null);
+                            } else {
+                                response = new Response(Status.ERROR, null,
+                                        String.format("Missing peer_id: %s", escapeQuotes(requestMsg)), null);
+                            }
+                            break;
+                        case NEW_MESSAGE:
+                            msgMgr.addMessage(request.messageId(), request.peerId(), request.message());
+                            response = new Response(Status.OK, null, null, null);
+                        case UNKNOWN:
                             response = new Response(Status.ERROR, null,
-                                    String.format("Missing peer_id: %s", escapeQuotes(requestMsg)), null);
-                        }
-                        break;
-                    case NEW_MESSAGE:
-                        msgMgr.addMessage(request.messageId(), request.peerId(), request.message());
-                        response = new Response(Status.OK, null, null, null);
-                    case UNKNOWN:
-                        response = new Response(Status.ERROR, null,
-                                String.format("Invalid message: %s", escapeQuotes(requestMsg)), null);
-                        break;
-                    default:
-                        response = new Response(Status.ERROR, null,
-                                String.format("Invalid command: %s", request.command().value()), null);
+                                    String.format("Invalid message: %s", escapeQuotes(requestMsg)), null);
+                            break;
+                        default:
+                            response = new Response(Status.ERROR, null,
+                                    String.format("Invalid command: %s", request.command().value()), null);
                     }
                     String responseJson = JsonUtil.toJson(response);
                     log.debug("Returning response {} to {}", responseJson, address);
