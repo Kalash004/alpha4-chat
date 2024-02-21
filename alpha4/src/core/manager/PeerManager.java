@@ -1,6 +1,6 @@
-package manager;
+package core.manager;
 
-import a.Peer;
+import core.Peer;
 
 import java.util.Collection;
 import java.util.Date;

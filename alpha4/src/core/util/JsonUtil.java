@@ -1,4 +1,4 @@
-package a.util;
+package core.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JacksonException;

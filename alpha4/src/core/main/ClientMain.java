@@ -1,10 +1,10 @@
-package main;
+package core.main;
 
-import a.Config;
-import a.DiscoveryLocator;
-import a.MessageLocator;
-import a.manager.MessagesManager;
-import a.manager.PeerManager;
+import core.Config;
+import core.DiscoveryLocator;
+import core.MessageLocator;
+import core.manager.MessagesManager;
+import core.manager.PeerManager;
 
 public class ClientMain {
     public static void main(String[] args) {

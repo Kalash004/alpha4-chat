@@ -1,10 +1,11 @@
-package a;
+package core;
 
-import a.manager.PeerManager;
-import a.model.Command;
-import a.model.Request;
-import a.model.Response;
-import a.util.JsonUtil;
+
+import core.model.Command;
+import core.model.Request;
+import core.model.Response;
+import core.manager.PeerManager;
+import core.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
