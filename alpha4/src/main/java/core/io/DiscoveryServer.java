@@ -21,18 +21,22 @@ import java.net.InetAddress;
 public class DiscoveryServer implements Runnable, Config {
     private static final Logger log = LoggerFactory.getLogger(DiscoveryServer.class);
 
+    private int defaultPacketBufferLength;
     private final int port;
     private final String peerId;
 
     private boolean stop;
 
     /**
+     * @param defaultPacketBufferLength
+     *            default packet buffer length
      * @param port
      *            discovery port
      * @param peerId
      *            peer Id
      */
-    public DiscoveryServer(int port, String peerId) {
+    public DiscoveryServer(int defaultPacketBufferLength, int port, String peerId) {
+        this.defaultPacketBufferLength = defaultPacketBufferLength;
         this.port = port;
         this.peerId = peerId;
     }
@@ -42,7 +46,7 @@ public class DiscoveryServer implements Runnable, Config {
         // open socket only once and reuse it
         try (DatagramSocket socket = new DatagramSocket(port)) {
             while (!stop) {
-                byte[] buf = new byte[DEFAULT_PACKET_BUFFER];
+                byte[] buf = new byte[defaultPacketBufferLength];
                 final DatagramPacket request = new DatagramPacket(buf, buf.length);
                 socket.receive(request);
                 new Thread(new DiscoveryRunnable(socket, request)).start();

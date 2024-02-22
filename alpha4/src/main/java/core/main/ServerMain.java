@@ -16,7 +16,7 @@ public class ServerMain {
 
         MessagesManager messagesManager = new MessagesManager(Config.HISTORY_LIMIT);
 
-        Runnable discoveryServer = new DiscoveryServer(Config.MSG_PORT, peerId);
+        Runnable discoveryServer = new DiscoveryServer(Config.DEFAULT_PACKET_BUFFER, Config.MSG_PORT, peerId);
         new Thread(discoveryServer).start();
         Runnable messageServer = new MessagingServer(Config.MSG_PORT, messagesManager);
         new Thread(messageServer).start();

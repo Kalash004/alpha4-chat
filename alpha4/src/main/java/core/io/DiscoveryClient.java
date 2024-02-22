@@ -34,7 +34,11 @@ public class DiscoveryClient implements Runnable, Config {
 
     private final String commandString;
 
+    private int defaultPacketBufferLength;
+
     /**
+     * @param defaultPacketBufferLength
+     *            default packet buffer length
      * @param ipAddress
      *            broadcast sub-net
      * @param port
@@ -46,7 +50,8 @@ public class DiscoveryClient implements Runnable, Config {
      * @param peerMgr
      *            Peer Manager {@see PeerManager}
      */
-    public DiscoveryClient(String ipAddress, int port, int timeout, String peerId, PeerManager peerMgr) {
+    public DiscoveryClient(int defaultPacketBufferLength, String ipAddress, int port, int timeout, String peerId,
+            PeerManager peerMgr) {
         try {
             this.ipAddress = InetAddress.getByName(ipAddress);
         } catch (UnknownHostException e) {
@@ -54,6 +59,7 @@ public class DiscoveryClient implements Runnable, Config {
             log.error(msg, e);
             throw new RuntimeException(msg, e);
         }
+        this.defaultPacketBufferLength = defaultPacketBufferLength;
         this.port = port;
         this.timeout = timeout;
         this.peerId = peerId;
@@ -79,7 +85,7 @@ public class DiscoveryClient implements Runnable, Config {
                 while (System.currentTimeMillis() - start < timeout) {
                     try {
                         log.debug("Waiting for the discovery responses");
-                        byte[] inBuf = new byte[DEFAULT_PACKET_BUFFER];
+                        byte[] inBuf = new byte[defaultPacketBufferLength];
                         DatagramPacket response = new DatagramPacket(inBuf, inBuf.length);
                         socket.receive(response);
 
@@ -108,7 +114,7 @@ public class DiscoveryClient implements Runnable, Config {
                         }
                     } catch (SocketTimeoutException e) {
                         // do nothing
-                        log.warn("Got socket timeout exception, no responses received during timeout {}ms", timeout);
+                        log.debug("Got socket timeout exception, no responses received during timeout {}ms", timeout);
                     } catch (Exception e) {
                         log.debug("Got exception while waiting for the response", e);
                     }

@@ -17,8 +17,8 @@ public class ClientMain {
         PeerManager peerManager = new PeerManager(Config.BROADCAST_TIMEOUT_MS * 3);
         MessagesManager messagesManager = new MessagesManager(Config.HISTORY_LIMIT);
 
-        Runnable discoverySender = new DiscoveryClient(Config.BROADCAST_ADDRESS, Config.BROADCAST_TIMEOUT_MS,
-                Config.MSG_PORT, peerId, peerManager);
+        Runnable discoverySender = new DiscoveryClient(Config.DEFAULT_PACKET_BUFFER, Config.BROADCAST_ADDRESS,
+                Config.BROADCAST_TIMEOUT_MS, Config.MSG_PORT, peerId, peerManager);
         new Thread(discoverySender).start();
 
         Runnable messageSender = new MessagingClient(Config.BROADCAST_TIMEOUT_MS, peerId, messagesManager, peerManager);
