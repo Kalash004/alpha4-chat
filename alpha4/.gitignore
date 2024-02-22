@@ -30,3 +30,7 @@ bin/
 
 .idea
 /target/
+/rpmbuild
+*.jar
+*.rpm
+*.tar

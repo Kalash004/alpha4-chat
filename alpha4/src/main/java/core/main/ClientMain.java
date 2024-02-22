@@ -10,6 +10,7 @@ import core.util.Config;
  * This class used for the local development only and needs to be removed.
  */
 public class ClientMain {
+
     public static void main(String[] args) {
         String peerId = "barash";
 
