@@ -3,12 +3,12 @@ package core.util;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import java.io.IOException;
-
+/**
+ * Utility class to convert objects to JSON string and back.
+ */
 public class JsonUtil {
     private static ObjectMapper MAPPER = new ObjectMapper();
 
@@ -26,6 +26,14 @@ public class JsonUtil {
         MAPPER.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
     }
 
+    /**
+     * Convert object to JSON string
+     *
+     * @param value
+     *            object
+     *
+     * @return serialized Object
+     */
     public static String toJson(Object value) {
         if (value == null) {
             return null;
@@ -37,19 +45,16 @@ public class JsonUtil {
         }
     }
 
-    public static <T> T fromJson(byte[] json, Class<T> type) {
-        if (json == null) {
-            return null;
-        }
-        try {
-            return MAPPER.readValue(json, type);
-        } catch (JacksonException e) {
-            throw new RuntimeException(String.format("Unable to map json %s to %s", json, type), e);
-        } catch (IOException e) {
-            throw new RuntimeException(String.format("Unable to map json %s to %s", json, type), e);
-        }
-    }
-
+    /**
+     * Convert JSON string to the object
+     *
+     * @param json
+     *            JSON string
+     * @param type
+     *            requested object type
+     *
+     * @return de-serialized JSON
+     */
     public static <T> T fromJson(String json, Class<T> type) {
         if (json == null) {
             return null;
@@ -58,17 +63,6 @@ public class JsonUtil {
             return MAPPER.readValue(json, type);
         } catch (JacksonException e) {
             throw new RuntimeException(String.format("Unable to map json %s to %s", json, type), e);
-        }
-    }
-
-    public static JsonNode fromJson(String json) {
-        if (json == null) {
-            return null;
-        }
-        try {
-            return MAPPER.readTree(json);
-        } catch (JacksonException e) {
-            throw new RuntimeException(String.format("Unable to read json tree %s", json), e);
         }
     }
 }

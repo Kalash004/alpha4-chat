@@ -1,10 +1,10 @@
-package core;
+package core.io;
 
-
+import core.manager.PeerManager;
 import core.model.Command;
 import core.model.Request;
 import core.model.Response;
-import core.manager.PeerManager;
+import core.util.Config;
 import core.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,17 +16,37 @@ import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
-public class DiscoveryLocator extends Thread implements Config {
-    private static final Logger log = LoggerFactory.getLogger(DiscoveryLocator.class);
+/**
+ * Discovering message peers by sending UDP broadcast {@link Command#HELLO} command with {@link DiscoveryClient#timeout}
+ * interval. Stores received peer Id's for the future message exchange.
+ */
+public class DiscoveryClient implements Runnable, Config {
+    private static final Logger log = LoggerFactory.getLogger(DiscoveryClient.class);
 
-    private InetAddress ipAddress;
-    private int port;
-    private int timeout;
+    private final InetAddress ipAddress;
+    private final int port;
+    private final int timeout;
 
-    private String peerId;
-    private PeerManager peerMgr;
+    private final String peerId;
+    private final PeerManager peerMgr;
 
-    public DiscoveryLocator(String ipAddress, int port, String peerId, PeerManager peerMgr) {
+    private boolean stop;
+
+    private final String commandString;
+
+    /**
+     * @param ipAddress
+     *            broadcast sub-net
+     * @param port
+     *            broadcast port
+     * @param timeout
+     *            socket timeout
+     * @param peerId
+     *            peer Id
+     * @param peerMgr
+     *            Peer Manager {@see PeerManager}
+     */
+    public DiscoveryClient(String ipAddress, int port, int timeout, String peerId, PeerManager peerMgr) {
         try {
             this.ipAddress = InetAddress.getByName(ipAddress);
         } catch (UnknownHostException e) {
@@ -35,36 +55,37 @@ public class DiscoveryLocator extends Thread implements Config {
             throw new RuntimeException(msg, e);
         }
         this.port = port;
-        this.timeout = Config.BROADCAST_TIMEOUT_MS;
+        this.timeout = timeout;
         this.peerId = peerId;
         this.peerMgr = peerMgr;
+        this.commandString = JsonUtil.toJson(new Request(Command.HELLO, peerId, null, null));
     }
 
     @Override
     public void run() {
-        String cmd = JsonUtil.toJson(new Request(Command.HELLO, peerId, null, null));
+        byte[] outBuf = commandString.getBytes();
 
         // open socket
         try (DatagramSocket socket = new DatagramSocket()) {
             // set broadcast
             socket.setBroadcast(true);
             socket.setSoTimeout(timeout);
-            while (true) {
-                log.debug("Sending broadcard request {} to {}:{}", cmd, ipAddress.getHostAddress(), port);
+            while (!stop) {
+                log.debug("Sending broadcard request {} to {}:{}", commandString, ipAddress.getHostAddress(), port);
                 // send request
-                byte[] outBuf = cmd.getBytes();
                 DatagramPacket request = new DatagramPacket(outBuf, outBuf.length, ipAddress, port);
                 socket.send(request);
                 long start = System.currentTimeMillis();
-                while (System.currentTimeMillis() - start < Config.BROADCAST_TIMEOUT_MS) {
+                while (System.currentTimeMillis() - start < timeout) {
                     try {
-                        log.debug("Waiting for the messages");
-                        byte[] inBuf = new byte[Config.DEFAULT_PACKET_BUFFER];
+                        log.debug("Waiting for the discovery responses");
+                        byte[] inBuf = new byte[DEFAULT_PACKET_BUFFER];
                         DatagramPacket response = new DatagramPacket(inBuf, inBuf.length);
                         socket.receive(response);
 
                         // peer IP address
                         String peerAddress = response.getAddress().getHostAddress();
+                        // peer port
                         int peerPort = response.getPort();
                         String responseString = new String(response.getData()).trim();
                         log.debug("Received message {} from {}:{}", responseString, peerAddress, peerPort);
@@ -83,7 +104,7 @@ public class DiscoveryLocator extends Thread implements Config {
                         } else if (!this.peerId.equals(peerId)) {
                             peerMgr.addPeer(peerId, peerAddress, peerPort);
                         } else {
-                            log.debug("Ignoring out peer %s from {}:{}", peerId, peerAddress, peerPort);
+                            log.debug("Ignoring out peer {} from {}:{}", peerId, peerAddress, peerPort);
                         }
                     } catch (SocketTimeoutException e) {
                         // do nothing
@@ -94,10 +115,17 @@ public class DiscoveryLocator extends Thread implements Config {
                 }
             }
         } catch (IOException e) {
-            String msg = String.format("Unable to send command \"%s\" to the peer %s:%s", cmd,
+            String msg = String.format("Unable to send command %s to the peer %s:%s", escapeQuotes(commandString),
                     ipAddress.getHostAddress(), port);
             log.error(msg, e);
             throw new RuntimeException(msg, e);
         }
+    }
+
+    /**
+     * Stop discovery client execution.
+     */
+    public void stop() {
+        stop = true;
     }
 }
