@@ -28,6 +28,7 @@ public class App {
     public static void main(String[] args) {
         Properties prop = new Properties();
         try (InputStream is = App.class.getClassLoader().getResourceAsStream(Config.DEFAULT_PROPERTIES_FILE)) {
+            log.debug("Loading default properties from {}", Config.DEFAULT_PROPERTIES_FILE);
             prop.load(is);
         } catch (IOException e) {
             log.error("Unable to load default properties", e);
@@ -36,7 +37,13 @@ public class App {
             log.debug("Starting application with arguments {}", String.join(", ", args));
             String propertyFilePath = args[0];
             File file = new File(propertyFilePath);
-            if (file.exists() && file.isFile() && file.canRead()) {
+            if (!file.exists()) {
+                log.warn("Property file does not exist {}", file.getAbsolutePath());
+            } else if (!file.isFile()) {
+                log.warn("Property file does not file {}", file.getAbsolutePath());
+            } else if (!file.canRead()) {
+                log.warn("Property file cannot be read {}", file.getAbsolutePath());
+            } else {
                 log.debug("Loading properties from the property file {}", file.getAbsolutePath());
                 try {
                     prop.load(new FileInputStream(file));
@@ -56,10 +63,20 @@ public class App {
 
         Integer peerTimeoutMs = Config.getProperty(prop, Config.PROP_PEER_TIMEOUT_MS, Integer.class);
         Integer historyLimit = Config.getProperty(prop, Config.PROP_HISTORY_LIMIT, Integer.class);
-        Integer defaultPacketBufferLength = Config.getProperty(prop, Config.PROP_DEFAULT_PACKET_BUFFER_LENGTH, Integer.class);
+        Integer defaultPacketBufferLength = Config.getProperty(prop, Config.PROP_DEFAULT_PACKET_BUFFER_LENGTH,
+                Integer.class);
         String broadcastAddress = Config.getProperty(prop, Config.PROP_BROADCAST_ADDRESS, String.class);
         Integer broadcastTimeoutMs = Config.getProperty(prop, Config.PROP_BROADCAST_TIMEOUT_MS, Integer.class);
         Integer msgPort = Config.getProperty(prop, Config.PROP_MSG_PORT, Integer.class);
+        Integer broadcastPort = Config.getProperty(prop, Config.PROP_BROADCAST_PORT, Integer.class);
+        // we are leaving that for the troubleshooting mode only
+        // if you want to run/debug two peers on the same box, define broadcast port in the custom property file
+        // where on peer 1 broadcast port will be matching peer 2 messaging port
+        // and peer 1 messaging port will be matching peer 2 broadcast port
+        // otherwise either broadcast port should match messaging port or should not be defined at all
+        if (broadcastPort == null) {
+            broadcastPort = msgPort;
+        }
         Integer apiPort = Config.getProperty(prop, Config.PROP_API_PORT, Integer.class);
 
         PeerManager peerManager = new PeerManager(peerTimeoutMs);
@@ -67,7 +84,7 @@ public class App {
         MessagesManager messagesManager = new MessagesManager(historyLimit);
 
         DiscoveryClient discoverySender = new DiscoveryClient(defaultPacketBufferLength, broadcastAddress,
-                broadcastTimeoutMs, msgPort, peerId, peerManager);
+                broadcastPort, broadcastTimeoutMs, peerId, peerManager);
         new Thread(discoverySender).start();
 
         MessagingClient messageSender = new MessagingClient(broadcastTimeoutMs, peerId, messagesManager, peerManager);

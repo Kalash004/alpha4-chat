@@ -75,11 +75,9 @@ public class MessagingClient implements Runnable, Config {
                         // send message to the peer
                         out.println(commandString);
                         out.println();
-                        log.debug("Sent message {} to peer {} {}:{}", escapeQuotes(commandString), peerId, ipAddress,
-                                port);
+                        log.debug("Sent message {} to peer {} {}:{}", commandString, peerId, ipAddress, port);
                         String input = readInput(in);
-                        log.debug("Received message {} from peer {} {}:{}", escapeQuotes(input), peerId, ipAddress,
-                                port);
+                        log.debug("Received message {} from peer {} {}:{}", input, peerId, ipAddress, port);
                         Response response = JsonUtil.fromJson(input, Response.class);
                         if (response != null && response.messages() != null) {
                             for (Entry<Long, Message> entry : response.messages().entrySet()) {
@@ -90,8 +88,8 @@ public class MessagingClient implements Runnable, Config {
                             }
                         }
                     } catch (IOException e) {
-                        String msg = String.format("Failed to send command %s to the peer %s %s:%s",
-                                escapeQuotes(commandString), peerId, ipAddress, port);
+                        String msg = String.format("Failed to send command %s to the peer %s %s:%s", commandString,
+                                peerId, ipAddress, port);
                         log.error(msg, e);
                         throw new RuntimeException(msg, e);
                     }

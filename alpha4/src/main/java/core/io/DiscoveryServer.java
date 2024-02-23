@@ -9,7 +9,6 @@ import core.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -49,10 +48,40 @@ public class DiscoveryServer implements Runnable, Config {
                 byte[] buf = new byte[defaultPacketBufferLength];
                 final DatagramPacket request = new DatagramPacket(buf, buf.length);
                 socket.receive(request);
-                new Thread(new DiscoveryRunnable(socket, request)).start();
+                try {
+                    final InetAddress address = request.getAddress();
+                    final String addressString = address.getHostAddress();
+                    final int port = request.getPort();
+
+                    final String requestMsg = new String(request.getData());
+                    log.info("Received broadcast request {} from {}:{}", requestMsg, addressString, port);
+
+                    final Request requestObj = JsonUtil.fromJson(requestMsg, Request.class);
+                    // respond only to the expected command
+                    if (requestObj.command() == Command.HELLO) {
+                        final Response response;
+                        String requestPeerId = requestObj.peerId();
+                        if (requestPeerId != null && !requestPeerId.equals(peerId)) {
+                            response = new Response(Status.OK, null, null, peerId);
+                        } else {
+                            response = new Response(Status.ERROR, null,
+                                    String.format("Missing peer_id: %s", escapeQuotes(requestMsg)), peerId);
+                        }
+                        final String responseString = JsonUtil.toJson(response);
+                        log.debug("Sending response {} to {}:{}", responseString, addressString, port);
+                        final byte[] outBuf = responseString.getBytes();
+                        socket.send(new DatagramPacket(outBuf, outBuf.length, address, port));
+                    }
+
+                } catch (Exception e) {
+                    log.error("Failed to process message on port {}", port, e);
+                }
             }
-        } catch (IOException e) {
-            log.error("Unable to receive messages on port", port, e);
+        } catch (Exception e) {
+            log.error("Failed to open socket on port {}", port, e);
+        }
+        if (stop) {
+            log.info("Execution stopped");
         }
     }
 
@@ -61,63 +90,5 @@ public class DiscoveryServer implements Runnable, Config {
      */
     public void stop() {
         stop = true;
-    }
-
-    /**
-     * Processing incoming request.
-     */
-    class DiscoveryRunnable implements Runnable, Config {
-        private static final Logger log = LoggerFactory.getLogger(DiscoveryRunnable.class);
-        private final DatagramSocket socket;
-        private final DatagramPacket request;
-
-        /**
-         * @param socket
-         *            connected socket
-         * @param request
-         *            UDP packet
-         */
-        public DiscoveryRunnable(DatagramSocket socket, DatagramPacket request) {
-            this.socket = socket;
-            this.request = request;
-        }
-
-        @Override
-        public void run() {
-            try {
-                final InetAddress address = request.getAddress();
-                final String addressString = address.getHostAddress();
-                final int port = request.getPort();
-
-                final String requestMsg = new String(request.getData());
-                log.info("Received broadcast request {} from {}:{}", requestMsg, addressString, port);
-
-                final Request requestObj = JsonUtil.fromJson(requestMsg, Request.class);
-                // respond only to the expected command
-                if (requestObj.command() == Command.HELLO) {
-                    final Response response;
-                    String requestPeerId = requestObj.peerId();
-                    if (requestPeerId != null && !requestPeerId.equals(peerId)) {
-                        response = new Response(Status.OK, null, null, peerId);
-                    } else {
-                        response = new Response(Status.ERROR, null,
-                                String.format("Missing peer_id: %s", escapeQuotes(requestMsg)), peerId);
-                    }
-                    final String responseString = JsonUtil.toJson(response);
-                    log.debug("Sending response {} to {}:{}", responseString, addressString, port);
-                    final byte[] outBuf = responseString.getBytes();
-                    socket.send(new DatagramPacket(outBuf, outBuf.length, address, port));
-                }
-            } catch (IOException e) {
-                log.error("Failed to process request", e);
-            } finally {
-                try {
-                    socket.close();
-                } catch (Exception e) {
-                    // do nothing
-                }
-            }
-        }
-
     }
 }

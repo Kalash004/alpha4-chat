@@ -47,6 +47,9 @@ public class MessagingServer implements Runnable, Config {
                 // to accept multiple parallel requests we need to process each request in a separate thread
                 new Thread(new MessageRunnable(server.accept(), msgMgr)).start();
             }
+            if (stop) {
+                log.info("Execution stopped");
+            }
         } catch (IOException e) {
             String msg = String.format("Failed to open socket on port %s", port);
             log.error(msg, e);
@@ -115,7 +118,7 @@ public class MessagingServer implements Runnable, Config {
                     break;
                 }
                 String responseJson = JsonUtil.toJson(response);
-                log.debug("Returning response {} to {}:{}", escapeQuotes(responseJson), address, port);
+                log.debug("Returning response {} to {}:{}", responseJson, address, port);
                 out.println(responseJson);
                 // send empty line at the end to respect incoming terminal connections,
                 // which sends every line as a separate chunks

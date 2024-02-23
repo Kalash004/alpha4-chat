@@ -5,6 +5,7 @@ import core.model.Response;
 import core.model.Status;
 import core.util.Config;
 import core.util.JsonUtil;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -56,6 +59,9 @@ public class ApiServer implements Runnable {
                 // start new thread for each incoming request to process multiple requests in parallel
                 // TODO: implement thread limits to avoid system DDOS
                 new Thread(new ApiRunnable(server.accept(), peerId, msgMgr)).start();
+            }
+            if (stop) {
+                log.info("Execution stopped");
             }
         } catch (IOException e) {
             String msg = String.format("Failed to open socket on port %s", port);
@@ -147,7 +153,11 @@ public class ApiServer implements Runnable {
                             String body = "Message is empty";
                             response = generateResponse(STATUS_BAD_REQUEST, MEDIA_TEXT_PLAIN, new Date(), body);
                         } else {
-                            msgMgr.addMessage(System.nanoTime(), peerId, message);
+                            // decode URL encoded message (see https://en.wikipedia.org/wiki/Percent-encoding)
+                            String decodedMessage = URLDecoder.decode(message, StandardCharsets.UTF_8.name());
+                            // escape HTML entities (to prevent <script></script> and other tags)
+                            String escapedMessage = StringEscapeUtils.escapeHtml4(decodedMessage);
+                            msgMgr.addMessage(System.nanoTime(), peerId, escapedMessage);
                             String body = JsonUtil.toJson(new Response(Status.OK, null, null, null));
                             response = generateResponse(STATUS_OK, MEDIA_APPLICATION_JSON, new Date(), body);
                         }

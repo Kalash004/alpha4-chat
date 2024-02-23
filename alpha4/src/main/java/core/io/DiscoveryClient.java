@@ -120,8 +120,11 @@ public class DiscoveryClient implements Runnable, Config {
                     }
                 }
             }
+            if (stop) {
+                log.info("Execution stopped");
+            }
         } catch (IOException e) {
-            String msg = String.format("Unable to send command %s to the peer %s:%s", escapeQuotes(commandString),
+            String msg = String.format("Unable to send command %s to the peer %s:%s", commandString,
                     ipAddress.getHostAddress(), port);
             log.error(msg, e);
             throw new RuntimeException(msg, e);
