@@ -34,3 +34,4 @@ bin/
 *.jar
 *.rpm
 *.tar
+*.iml
