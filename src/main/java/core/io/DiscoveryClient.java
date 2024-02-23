@@ -93,7 +93,7 @@ public class DiscoveryClient implements Runnable, Config {
                         String peerAddress = response.getAddress().getHostAddress();
                         // peer port
                         int peerPort = response.getPort();
-                        String responseString = new String(response.getData()).trim();
+                        String responseString = new String(trim(response.getData()));
                         log.debug("Received message {} from {}:{}", responseString, peerAddress, peerPort);
 
                         Response responseObj = JsonUtil.fromJson(responseString, Response.class);

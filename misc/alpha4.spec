@@ -20,7 +20,11 @@ Alpha4 P2P Messaging Server v%{version}
 %pre
 if [ "$1" = 1 ]; then
 	echo "Stopping previous service version"
-    systemctl stop %{name}
+    {
+		systemctl stop %{name}
+	} || {
+		echo "Failed to stop previous service version"
+	}
 fi
 
 %build
@@ -60,7 +64,11 @@ fi
 %preun
 if [ "$1" = 0 ]; then
 	echo "Stopping service before removal"
-	systemctl stop %{name}
+    {
+		systemctl stop %{name}
+	} || {
+		echo "Failed to stop previous service version"
+	}
 	echo "Refreshing systemd services"
 	systemctl daemon-reload
 	systemctl reset-failed

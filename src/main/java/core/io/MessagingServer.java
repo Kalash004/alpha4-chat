@@ -101,16 +101,15 @@ public class MessagingServer implements Runnable, Config {
                     if (peerId != null) {
                         response = new Response(Status.OK, msgMgr.getMessages(), null, null);
                     } else {
-                        response = new Response(Status.ERROR, null,
-                                String.format("Missing peer_id: %s", escapeQuotes(requestMsg)), null);
+                        response = new Response(Status.ERROR, null, String.format("Missing peer_id: %s", requestMsg),
+                                null);
                     }
                     break;
                 case NEW_MESSAGE:
                     msgMgr.addMessage(request.messageId(), peerId, request.message());
                     response = new Response(Status.OK, null, null, null);
                 case UNKNOWN:
-                    response = new Response(Status.ERROR, null,
-                            String.format("Invalid message: %s", escapeQuotes(requestMsg)), null);
+                    response = new Response(Status.ERROR, null, String.format("Invalid message: %s", requestMsg), null);
                     break;
                 default:
                     response = new Response(Status.ERROR, null, String.format("Invalid command: %s", request.command()),

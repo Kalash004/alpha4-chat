@@ -53,7 +53,7 @@ public class DiscoveryServer implements Runnable, Config {
                     final String addressString = address.getHostAddress();
                     final int port = request.getPort();
 
-                    final String requestMsg = new String(request.getData());
+                    final String requestMsg = new String(trim(request.getData()));
                     log.info("Received broadcast request {} from {}:{}", requestMsg, addressString, port);
 
                     final Request requestObj = JsonUtil.fromJson(requestMsg, Request.class);
@@ -63,16 +63,18 @@ public class DiscoveryServer implements Runnable, Config {
                         String requestPeerId = requestObj.peerId();
                         if (requestPeerId != null && !requestPeerId.equals(peerId)) {
                             response = new Response(Status.OK, null, null, peerId);
-                        } else {
+                        } else if (requestPeerId == null) {
                             response = new Response(Status.ERROR, null,
-                                    String.format("Missing peer_id: %s", escapeQuotes(requestMsg)), peerId);
+                                    String.format("Missing peer_id: %s", requestMsg), peerId);
+                        } else {
+                            // do not return anything to ourself
+                            continue;
                         }
                         final String responseString = JsonUtil.toJson(response);
                         log.debug("Sending response {} to {}:{}", responseString, addressString, port);
                         final byte[] outBuf = responseString.getBytes();
                         socket.send(new DatagramPacket(outBuf, outBuf.length, address, port));
                     }
-
                 } catch (Exception e) {
                     log.error("Failed to process message on port {}", port, e);
                 }
