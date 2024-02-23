@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e -o pipefail
-set -x
 
 PROJECT_NAME=alpha4
 
@@ -63,7 +62,7 @@ function package() {
 
 	# cleanup RPM build files
     echo "Cleanup"
-    #cleanup
+    cleanup
 }
 
 package
