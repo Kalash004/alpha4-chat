@@ -92,29 +92,46 @@ public class MessagingServer implements Runnable, Config {
                 int port = socket.getPort();
                 String requestMsg = readInput(in);
                 log.info("Received message {} from {}:{}", requestMsg, address, port);
-                Request request = JsonUtil.fromJson(requestMsg, Request.class);
-                String peerId = request.peerId();
-
                 Response response;
-                switch (request.command()) {
-                case HELLO:
-                    if (peerId != null) {
-                        response = new Response(Status.OK, msgMgr.getMessages(), null, null);
-                    } else {
-                        response = new Response(Status.ERROR, null, String.format("Missing peer_id: %s", requestMsg),
-                                null);
+                try {
+                    Request request = JsonUtil.fromJson(requestMsg, Request.class);
+                    String peerId = request.peerId();
+                    Command command = request.command();
+                    if (request.command() == null) {
+                        log.warn("Missing command in the request {}", requestMsg);
+                        command = Command.UNKNOWN;
                     }
-                    break;
-                case NEW_MESSAGE:
-                    msgMgr.addMessage(request.messageId(), peerId, request.message());
-                    response = new Response(Status.OK, null, null, null);
-                case UNKNOWN:
-                    response = new Response(Status.ERROR, null, String.format("Invalid message: %s", requestMsg), null);
-                    break;
-                default:
-                    response = new Response(Status.ERROR, null, String.format("Invalid command: %s", request.command()),
-                            null);
-                    break;
+                    switch (command) {
+                    case HELLO:
+                        if (peerId != null) {
+                            response = new Response(Status.OK, msgMgr.getMessages(), null, null);
+                        } else {
+                            response = new Response(Status.ERROR, null,
+                                    String.format("Missing peer_id: %s", requestMsg), null);
+                        }
+                        break;
+                    case NEW_MESSAGE:
+                        if (peerId != null) {
+                            msgMgr.addMessage(request.messageId(), peerId, request.message());
+                            response = new Response(Status.OK, null, null, null);
+                        } else {
+                            response = new Response(Status.ERROR, null,
+                                    String.format("Missing peer_id: %s", requestMsg), null);
+                        }
+                        break;
+                    case UNKNOWN:
+                        response = new Response(Status.ERROR, null, String.format("Invalid message: %s", requestMsg),
+                                null);
+                        break;
+                    default:
+                        response = new Response(Status.ERROR, null,
+                                String.format("Invalid command: %s", request.command()), null);
+                        break;
+                    }
+                } catch (Exception e) {
+                    String msg = String.format("Unable to parse request %s", requestMsg);
+                    log.warn(msg, e);
+                    response = new Response(Status.ERROR, null, msg, null);
                 }
                 String responseJson = JsonUtil.toJson(response);
                 log.debug("Returning response {} to {}:{}", responseJson, address, port);
