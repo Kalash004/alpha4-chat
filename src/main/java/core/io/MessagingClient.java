@@ -150,8 +150,8 @@ public class MessagingClient implements Runnable, Config {
                             out.println();
                             log.debug("Sent new message to peer {} {}:{}, message {}", peerId, ipAddress, port,
                                     requestString);
-                            String input = readInput(in);
-                            log.debug("Received response {} from peer {} {}:{}", input, peerId, ipAddress, port);
+                            // String input = readInput(in);
+                            // log.debug("Received response {} from peer {} {}:{}", input, peerId, ipAddress, port);
                         } catch (IOException e) {
                             String msg = String.format("Failed to send command %s to the peer %s %s:%s", requestString,
                                     peerId, ipAddress, port);
