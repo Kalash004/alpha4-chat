@@ -56,6 +56,7 @@ public class MessagesManager {
     public void addNewMessage(String peerId, String message) {
         long id = System.currentTimeMillis();
         log.debug("Store new message with id {} from peer {}", id, peerId);
+        addMessage(id, peerId, message);
         newMessagesMap.put(id, new Message(peerId, message));
     }
 
