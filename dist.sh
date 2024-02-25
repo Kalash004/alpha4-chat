@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 
 APP_NAME=alpha4
 
