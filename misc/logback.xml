@@ -1,0 +1,21 @@
+<configuration>
+	<appender name="STDOUT"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M \(%file:%line\) - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- mute unnecessary discovery logs -->
+	<logger name="core.io.DiscoveryServer" level="WARN" />
+	<logger name="core.io.DiscoveryClient" level="WARN" />
+	<!-- mute unnecessary mesages manager logs -->
+	<logger name="core.manager.MessagesManager" level="WARN" />
+	<!-- mute unnecessary peer manager logs -->
+	<logger name="core.manager.PeerManager" level="WARN" />
+	<logger name="core.manager.MessagingServer$MessageRunnable" level="WARN" />
+
+	<root level="debug">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>

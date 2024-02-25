@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 APP_NAME=alpha4
 USER=jouda
@@ -14,9 +14,11 @@ cp -f *.service "${SVC_DIR}"
 cp -f *.jar "${APP_DIR}"
 cp -f *.sh "${APP_DIR}"
 cp -f *.properties "${APP_DIR}"
+cp -f *.xml "${APP_DIR}"
 
 chown ${USER}:${GROUP} "${APP_DIR}"
 chmod 644 ${APP_DIR}/*.jar
+chmod 644 ${APP_DIR}/*.properties
 chmod 644 ${APP_DIR}/*.properties
 chmod 755 ${APP_DIR}/*.sh
 chmod 644 ${SVC_DIR}/${APP_NAME}.service

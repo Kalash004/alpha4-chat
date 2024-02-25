@@ -14,7 +14,7 @@ echo "Stopping service before removal"
 	echo "Failed to stop previous service version"
 }
 
-rm "${SVC_DIR}/${APP_NAME}"
+rm "${SVC_DIR}/${APP_NAME}.service"
 rm -rf "${APP_DIR}"
 
 
