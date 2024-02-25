@@ -135,7 +135,8 @@ public class MessagingClient implements Runnable, Config {
                                     newMsgPeerId, peerId, ipAddress, port);
                             continue;
                         }
-                        log.debug("Sending new message {} to peer {} {}:{}", messageId, peerId, ipAddress, port);
+                        log.debug("Sending new message to peer {}  {}:{}, Message id {}", peerId, ipAddress, port,
+                                messageId);
                         String requestString = null;
                         try {
                             socket = new Socket();
@@ -147,7 +148,8 @@ public class MessagingClient implements Runnable, Config {
                                     .toJson(new Request(Command.NEW_MESSAGE, this.peerId, messageId, message));
                             out.println(requestString);
                             out.println();
-                            log.debug("Sent new message {} to peer {} {}:{}", requestString, peerId, ipAddress, port);
+                            log.debug("Sent new message to peer {} {}:{}, message {}", peerId, ipAddress, port,
+                                    requestString);
                             String input = readInput(in);
                             log.debug("Received response {} from peer {} {}:{}", input, peerId, ipAddress, port);
                         } catch (IOException e) {
