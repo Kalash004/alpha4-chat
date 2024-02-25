@@ -157,7 +157,7 @@ public class ApiServer implements Runnable {
                             String decodedMessage = URLDecoder.decode(message, StandardCharsets.UTF_8.name());
                             // escape HTML entities (to prevent <script></script> and other tags)
                             String escapedMessage = StringEscapeUtils.escapeHtml4(decodedMessage);
-                            msgMgr.addMessage(System.nanoTime(), peerId, escapedMessage);
+                            msgMgr.addMessage(System.currentTimeMillis(), peerId, escapedMessage);
                             String body = JsonUtil.toJson(new Response(Status.OK, null, null, null));
                             response = generateResponse(STATUS_OK, MEDIA_APPLICATION_JSON, new Date(), body);
                         }
