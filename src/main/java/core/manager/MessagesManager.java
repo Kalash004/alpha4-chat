@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
@@ -37,12 +38,10 @@ public class MessagesManager {
      */
     public void addMessage(long id, String peerId, String message) {
         log.debug("Store message with id {} from peer {}", id, peerId);
-        synchronized (messagesMap) {
-            messagesMap.put(id, new Message(peerId, message));
-            while (messagesMap.size() >= messagesLimit) {
-                log.debug("Removing message {} to meet limit {}", messagesMap.size(), messagesLimit);
-                messagesMap.pollFirstEntry();
-            }
+        messagesMap.put(id, new Message(peerId, message));
+        while (messagesMap.size() >= messagesLimit) {
+            log.debug("Removing message {} to meet limit {}", messagesMap.size(), messagesLimit);
+            messagesMap.pollFirstEntry();
         }
     }
 
@@ -85,6 +84,11 @@ public class MessagesManager {
      */
     public void clearNewMessages() {
         log.debug("Clearing new {} messages", newMessagesMap.size());
+        for (Entry<Long, Message> entry : newMessagesMap.entrySet()) {
+            Long id = entry.getKey();
+            Message message = entry.getValue();
+            log.debug("Removing message {} {} {}", id, message.peerId(), message.message());
+        }
         newMessagesMap.clear();
     }
 }
