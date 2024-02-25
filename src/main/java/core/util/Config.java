@@ -60,12 +60,7 @@ public interface Config {
     String PROP_PEER_TIMEOUT_MS = "peer-timeout-ms";
 
     default String readInput(BufferedReader in) throws IOException {
-        StringBuilder input = new StringBuilder();
-        String line;
-        while ((line = in.readLine()) != null && !line.isEmpty()) {
-            input.append(line).append("\n");
-        }
-        return input.toString().strip();
+        return in.readLine();
     }
 
     /**

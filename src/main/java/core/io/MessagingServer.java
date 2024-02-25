@@ -90,55 +90,68 @@ public class MessagingServer implements Runnable, Config {
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
                 String address = socket.getInetAddress().getHostAddress();
                 int port = socket.getPort();
-                String requestMsg = readInput(in);
-                log.info("Received message {} from {}:{}", requestMsg, address, port);
-                Response response;
-                try {
-                    Request request = JsonUtil.fromJson(requestMsg, Request.class);
-                    String peerId = request.peerId();
-                    Command command = request.command();
-                    if (request.command() == null) {
-                        log.warn("Missing command in the request {}", requestMsg);
-                        command = Command.UNKNOWN;
-                    }
-                    switch (command) {
-                    case HELLO:
-                        if (peerId != null) {
-                            response = new Response(Status.OK, msgMgr.getMessages(), null, null);
-                        } else {
-                            response = new Response(Status.ERROR, null,
-                                    String.format("Missing peer_id: %s", requestMsg), null);
-                        }
-                        break;
-                    case NEW_MESSAGE:
-                        if (peerId != null) {
-                            msgMgr.addNewMessage(peerId, request.message());
-                            response = new Response(Status.OK, null, null, null);
-                        } else {
-                            response = new Response(Status.ERROR, null,
-                                    String.format("Missing peer_id: %s", requestMsg), null);
-                        }
-                        break;
-                    case UNKNOWN:
-                        response = new Response(Status.ERROR, null, String.format("Invalid message: %s", requestMsg),
-                                null);
-                        break;
-                    default:
-                        response = new Response(Status.ERROR, null,
-                                String.format("Invalid command: %s", request.command()), null);
+                Command expectedCommand = Command.HELLO;
+                while (true) {
+                    String requestMsg = readInput(in);
+                    if (requestMsg == null || requestMsg.isEmpty()) {
+                        log.info("Received empty message from {}:{}", requestMsg, address, port);
                         break;
                     }
-                } catch (Exception e) {
-                    String msg = String.format("Unable to parse request %s", requestMsg);
-                    log.warn(msg, e);
-                    response = new Response(Status.ERROR, null, msg, null);
+                    log.info("Received message {} from {}:{}", requestMsg, address, port);
+                    Response response;
+                    try {
+                        Request request = JsonUtil.fromJson(requestMsg, Request.class);
+                        String peerId = request.peerId();
+                        Command command = request.command();
+                        if (request.command() == null) {
+                            throw new IllegalArgumentException(
+                                    String.format("Missing command in the request %s", requestMsg));
+                        }
+                        if (expectedCommand != command) {
+                            throw new IllegalArgumentException(
+                                    String.format("Expected command '%s' but received '%s'", expectedCommand.value(),
+                                            command.value()));
+                        }
+                        switch (command) {
+                        case HELLO:
+                            if (peerId != null) {
+                                response = new Response(Status.OK, msgMgr.getMessages(), null, null);
+                                expectedCommand = Command.NEW_MESSAGE;
+                            } else {
+                                throw new IllegalArgumentException(
+                                        String.format("Missing peer_id in request %s", requestMsg));
+                            }
+                            break;
+                        case NEW_MESSAGE:
+                            if (peerId != null) {
+                                msgMgr.addNewMessage(peerId, request.message());
+                                response = new Response(Status.OK, null, null, null);
+                            } else {
+                                throw new IllegalArgumentException(
+                                        String.format("Missing peer_id in request %s", requestMsg));
+                            }
+                            break;
+                        case UNKNOWN:
+                        default:
+                            throw new IllegalArgumentException(String.format("Invalid request %s", requestMsg));
+                        }
+                    } catch (Exception e) {
+                        String msg = String.format("Failed to process message exchange %s", requestMsg);
+                        log.warn(msg, e);
+                        response = new Response(Status.ERROR, null, e.getMessage(), null);
+                        String responseJson = JsonUtil.toJson(response);
+                        log.debug("Returning response {} to {}:{}", responseJson, address, port);
+                        out.println(responseJson);
+                        out.flush();
+                        break;
+                    }
+                    String responseJson = JsonUtil.toJson(response);
+                    log.debug("Returning response {} to {}:{}", responseJson, address, port);
+                    out.println(responseJson);
+                    // send empty line at the end to respect incoming terminal connections,
+                    // which sends every line as a separate chunks
+                    out.flush();
                 }
-                String responseJson = JsonUtil.toJson(response);
-                log.debug("Returning response {} to {}:{}", responseJson, address, port);
-                out.println(responseJson);
-                // send empty line at the end to respect incoming terminal connections,
-                // which sends every line as a separate chunks
-                out.println();
             } catch (IOException e) {
                 log.error("Failed to process request", e);
             } finally {

@@ -166,7 +166,6 @@ public class ApiServer implements Runnable {
                         String body = "The requested resource not found " + queryString;
                         response = generateResponse(STATUS_NOT_FOUND, MEDIA_TEXT_PLAIN, new Date(), body);
                     }
-                    log.error(queryString);
                 }
 
                 out.println(response);
