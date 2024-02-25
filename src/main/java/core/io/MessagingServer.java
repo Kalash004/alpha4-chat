@@ -112,7 +112,7 @@ public class MessagingServer implements Runnable, Config {
                         break;
                     case NEW_MESSAGE:
                         if (peerId != null) {
-                            msgMgr.addMessage(request.messageId(), peerId, request.message());
+                            msgMgr.addNewMessage(peerId, request.message());
                             response = new Response(Status.OK, null, null, null);
                         } else {
                             response = new Response(Status.ERROR, null,

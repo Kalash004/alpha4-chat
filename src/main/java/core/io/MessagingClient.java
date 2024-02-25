@@ -20,6 +20,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -42,6 +43,8 @@ public class MessagingClient implements Runnable, Config {
 
     private final ExecutorService executor;
 
+    private final String peerId;
+
     /**
      * @param peerId
      *            peer id
@@ -55,6 +58,7 @@ public class MessagingClient implements Runnable, Config {
     public MessagingClient(int timeout, String peerId, MessagesManager msgMgr, PeerManager peerMgr) {
         this.msgMgr = msgMgr;
         this.timeout = timeout;
+        this.peerId = peerId;
         this.peerMgr = peerMgr;
         this.commandString = JsonUtil.toJson(new Request(Command.HELLO, peerId, null, null));
         this.executor = Executors.newCachedThreadPool();
@@ -71,7 +75,8 @@ public class MessagingClient implements Runnable, Config {
                 String ipAddress = peer.ipAddress();
                 int port = peer.port();
                 Future<?> future = executor.submit(() -> {
-                    log.debug("Executing messaging exchange for peer {} {}:{}", peerId, ipAddress, port);
+                    log.debug("Executing messaging receive for peer {} {}:{}", peerId, ipAddress, port);
+                    // handshake
                     try (Socket socket = new Socket(ipAddress, port);
                             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
@@ -94,8 +99,39 @@ public class MessagingClient implements Runnable, Config {
                         String msg = String.format("Failed to send command %s to the peer %s %s:%s", commandString,
                                 peerId, ipAddress, port);
                         log.error(msg, e);
-                        throw new RuntimeException(msg, e);
                     }
+                    // sending new messages if any
+                    Map<Long, Message> newMsgs = msgMgr.getNewMessages();
+                    log.debug("Executing new messaging {} send for peer {} {}:{}", newMsgs.size(), peerId, ipAddress,
+                            port);
+                    for (Entry<Long, Message> entry : newMsgs.entrySet()) {
+                        Long messageId = entry.getKey();
+                        String message = entry.getValue().message();
+                        String newMsgPeerId = entry.getValue().peerId();
+                        if (peerId.equals(newMsgPeerId)) {
+                            log.debug("Skip sending new message {} from peer {} to peer {} {}:{}", messageId,
+                                    newMsgPeerId, peerId, ipAddress, port);
+                            continue;
+                        }
+                        log.debug("Sending new message {} to peer {} {}:{}", messageId, peerId, ipAddress, port);
+                        try (Socket socket = new Socket(ipAddress, port);
+                                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                                BufferedReader in = new BufferedReader(
+                                        new InputStreamReader(socket.getInputStream()));) {
+                            String requestString = JsonUtil
+                                    .toJson(new Request(Command.NEW_MESSAGE, this.peerId, messageId, message));
+                            out.println(requestString);
+                            out.println();
+                            log.debug("Sent new message {} to peer {} {}:{}", commandString, peerId, ipAddress, port);
+                            String input = readInput(in);
+                            log.debug("Received response {} from peer {} {}:{}", input, peerId, ipAddress, port);
+                        } catch (IOException e) {
+                            String msg = String.format("Failed to send command %s to the peer %s %s:%s", commandString,
+                                    peerId, ipAddress, port);
+                            log.error(msg, e);
+                        }
+                    }
+
                 });
                 futures.add(future);
             }
@@ -106,6 +142,8 @@ public class MessagingClient implements Runnable, Config {
                     // do nothing
                 }
             }
+            // clear all new messages
+            msgMgr.clearNewMessages();
             log.debug("Executing messaging exchange waits {}ms", timeout);
             try {
                 Thread.sleep(timeout);
