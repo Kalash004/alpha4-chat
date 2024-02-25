@@ -27,6 +27,7 @@ public class App {
 
     public static void main(String[] args) {
         Properties prop = new Properties();
+        // Property reading block
         try (InputStream is = App.class.getClassLoader().getResourceAsStream(Config.DEFAULT_PROPERTIES_FILE)) {
             log.debug("Loading default properties from {}", Config.DEFAULT_PROPERTIES_FILE);
             prop.load(is);
@@ -78,7 +79,8 @@ public class App {
             broadcastPort = msgPort;
         }
         Integer apiPort = Config.getProperty(prop, Config.PROP_API_PORT, Integer.class);
-
+        // End property reading block
+        // Init block
         PeerManager peerManager = new PeerManager(peerTimeoutMs);
 
         MessagesManager messagesManager = new MessagesManager(historyLimit);
@@ -98,7 +100,9 @@ public class App {
 
         ApiServer apiServer = new ApiServer(apiPort, peerId, messagesManager);
         new Thread(apiServer).start();
+        // End init block
 
+        // Shutdown block
         // gracefully stop servers and senders when JVM shutdown requested
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             discoverySender.stop();
@@ -107,5 +111,6 @@ public class App {
             messageServer.stop();
             apiServer.stop();
         }));
+        // End shutdown block
     }
 }
