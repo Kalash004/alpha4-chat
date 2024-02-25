@@ -41,7 +41,9 @@ public class PeerManager {
      *            peer port
      */
     public void addPeer(String peerId, String ipAddress, int port) {
-        peers.add(new Peer(peerId, ipAddress, port, new Date()));
+        Date date = new Date();
+        log.info("Stored peer {} from {}:{} at {}", peerId, ipAddress, port, date);
+        peers.add(new Peer(peerId, ipAddress, port, date));
     }
 
     /**

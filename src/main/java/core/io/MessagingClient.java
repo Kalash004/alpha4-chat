@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -63,12 +64,14 @@ public class MessagingClient implements Runnable, Config {
     public void run() {
         while (!stop) {
             List<Future<?>> futures = new ArrayList<>();
-            for (Peer peer : peerMgr.getPeers()) {
+            Collection<Peer> peers = peerMgr.getPeers();
+            log.debug("Executing messaging exchange for {} peers", peers.size());
+            for (Peer peer : peers) {
                 String peerId = peer.peerId();
                 String ipAddress = peer.ipAddress();
                 int port = peer.port();
-
                 Future<?> future = executor.submit(() -> {
+                    log.debug("Executing messaging exchange for peer {} {}:{}", peerId, ipAddress, port);
                     try (Socket socket = new Socket(ipAddress, port);
                             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
@@ -103,6 +106,7 @@ public class MessagingClient implements Runnable, Config {
                     // do nothing
                 }
             }
+            log.debug("Executing messaging exchange waits {}ms", timeout);
             try {
                 Thread.sleep(timeout);
             } catch (InterruptedException e) {

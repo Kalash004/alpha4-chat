@@ -108,6 +108,7 @@ public class DiscoveryClient implements Runnable, Config {
                             }
                             // ignore ourself
                         } else if (!this.peerId.equals(peerId)) {
+                            log.info("Received peer {} from {}:{}", peerId, peerAddress, peerPort);
                             peerMgr.addPeer(peerId, peerAddress, peerPort);
                         } else {
                             log.debug("Ignoring out peer {} from {}:{}", peerId, peerAddress, peerPort);

@@ -35,6 +35,7 @@ public class MessagesManager {
      *            message content
      */
     public void addMessage(long id, String peerId, String message) {
+        log.debug("Store message with id {} from peer {}", id, peerId);
         synchronized (messagesMap) {
             messagesMap.put(id, new Message(peerId, message));
             while (messagesMap.size() >= messagesLimit) {
@@ -50,6 +51,7 @@ public class MessagesManager {
      * @return messages map
      */
     public Map<Long, Message> getMessages() {
+        log.debug("Returning {} messages", messagesMap.size());
         return messagesMap;
     }
 }
