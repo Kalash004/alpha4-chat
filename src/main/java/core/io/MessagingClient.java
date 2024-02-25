@@ -136,21 +136,22 @@ public class MessagingClient implements Runnable, Config {
                             continue;
                         }
                         log.debug("Sending new message {} to peer {} {}:{}", messageId, peerId, ipAddress, port);
+                        String requestString = null;
                         try {
                             socket = new Socket();
                             socket.connect(new InetSocketAddress(ipAddress, port), SOCKET_TIMEOUT);
                             out = new PrintWriter(socket.getOutputStream(), true);
                             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                            String requestString = JsonUtil
+                            requestString = JsonUtil
                                     .toJson(new Request(Command.NEW_MESSAGE, this.peerId, messageId, message));
                             out.println(requestString);
                             out.println();
-                            log.debug("Sent new message {} to peer {} {}:{}", commandString, peerId, ipAddress, port);
+                            log.debug("Sent new message {} to peer {} {}:{}", requestString, peerId, ipAddress, port);
                             String input = readInput(in);
                             log.debug("Received response {} from peer {} {}:{}", input, peerId, ipAddress, port);
                         } catch (IOException e) {
-                            String msg = String.format("Failed to send command %s to the peer %s %s:%s", commandString,
+                            String msg = String.format("Failed to send command %s to the peer %s %s:%s", requestString,
                                     peerId, ipAddress, port);
                             log.error(msg, e);
                         } finally {
