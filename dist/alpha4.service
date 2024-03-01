@@ -1,0 +1,14 @@
+[Unit]
+Description=Alpha4 P2P Messaging Service
+
+[Service]
+User=jouda
+Group=jouda
+
+ExecStart=/usr/share/alpha4/start.sh
+ExecStop=/bin/kill -15 $MAINPID
+
+Type=forking
+
+[Install]
+WantedBy=default.target
