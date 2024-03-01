@@ -2,8 +2,8 @@
 Description=Alpha4 P2P Messaging Service
 
 [Service]
-User=root
-Group=root
+User=jouda
+Group=jouda
 
 ExecStart=/usr/share/alpha4/start.sh
 ExecStop=/bin/kill -15 $MAINPID

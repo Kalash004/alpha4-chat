@@ -31,7 +31,7 @@ bin/
 .idea
 /target/
 /rpmbuild
-*.jar
+*.jar1
 *.rpm
 *.tar
 *.iml

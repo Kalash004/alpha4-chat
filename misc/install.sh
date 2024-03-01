@@ -8,7 +8,7 @@ APP_DIR="/usr/share/${APP_NAME}"
 SVC_DIR=/etc/systemd/system
 
 mkdir -p "${APP_DIR}"
-mkdir -p "SVC_DIR"
+mkdir -p "${SVC_DIR}"
 
 cp -f *.service "${SVC_DIR}"
 cp -f *.jar "${APP_DIR}"
